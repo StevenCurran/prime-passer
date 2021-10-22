@@ -2,7 +2,6 @@ package com.steventc.randomizer;
 
 import com.steventc.shared.Config;
 
-import javax.sound.midi.Soundbank;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -22,24 +21,24 @@ import static com.steventc.shared.Config.RUN_TIME_SECONDS;
 /**
  * This class will write positive integers into a memory mapped file numbers.dat (can be on /dev/shm if possible)
  * It will then read the responses back from a file called primes.dat, which will include all the numbers followed by T / F if prime or not.
- *
+ * <p>
  * This file should really be used like a ring buffer, which some additional level of implementation would be needed on top.
- *
- * A thread will write these outgoing numbers to a file, and another thread will print them. The the program will stop after a predetermined number of seconds in the {@link Config} class.
+ * <p>
+ * A thread will write these outgoing numbers to a file, and another thread will print them. The program will stop after a predetermined number of seconds in the {@link Config} class.
  */
 public class Randomizer {
 
     private final Random randomNumberGenerator = new Random();
+    private FileChannel channel;
     private volatile boolean stop = false;
     private volatile boolean completed = false;
-    public FileChannel channel;
 
     public static void main(String[] args) throws IOException {
 
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(3);
 
         Randomizer randomizer = new Randomizer();
-        IntBuffer intBuffer = randomizer.createIntBuffer(Config.BUFFER_SIZE);
+        var intBuffer = randomizer.createIntBuffer(Config.BUFFER_SIZE);
 
         executor.schedule(randomizer::stop, RUN_TIME_SECONDS, TimeUnit.SECONDS);
         executor.submit(() -> randomizer.generateNumber(intBuffer));
@@ -56,12 +55,6 @@ public class Randomizer {
                 forEach(i -> {
                     if (!intBuffer.hasRemaining()) {
                         intBuffer.rewind();
-                    }
-
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
 
                     intBuffer.put(i);
@@ -81,7 +74,7 @@ public class Randomizer {
 
             while (resultsReader.hasRemaining()){
                 int potentialPrime = resultsReader.getInt();
-                char isPrime = (char) resultsReader.getInt();
+                boolean isPrime = (char) resultsReader.getInt() == 'T';
 
                 if (potentialPrime != 0) {
                     System.out.println(potentialPrime + " " + isPrime);
@@ -91,7 +84,6 @@ public class Randomizer {
                     resultsReader.rewind();
                 }
             }
-
 
         } catch (IOException e) {
             e.printStackTrace();
