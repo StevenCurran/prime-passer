@@ -25,6 +25,8 @@ import static com.steventc.shared.Config.RUN_TIME_SECONDS;
  * This file should really be used like a ring buffer, which some additional level of implementation would be needed on top.
  * <p>
  * A thread will write these outgoing numbers to a file, and another thread will print them. The program will stop after a predetermined number of seconds in the {@link Config} class.
+ * 
+ * Approaches from OSS that could be used include Aeron, and Chronicle Queues.
  */
 public class Randomizer {
 
